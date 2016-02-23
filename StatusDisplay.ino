@@ -1,25 +1,42 @@
 #include <LiquidCrystal.h>
+#include <TimedAction.h>
+#include <Button.h>
 LiquidCrystal lcd(7, 6, 5, 4, 3, 2);
-int i;
-const int buttonPin = 8;
-int buttonState = 0;
+//int buttonState = 0;
+Button button = Button(12, PULLUP);
 int lcdState = 0;
-void setup()
+void ButtonState();
+TimedAction buttonCheck = TimedAction(1000, ButtonState);
 
-{
+void setup() {
   Serial.begin(9600);
   lcd.begin(16, 2);
-  digitalWrite(11, HIGH);
-  pinMode (buttonPin, INPUT);
 }
-
 
 void loop()
 {
-  
-  while (Serial.available() == 0);
-  buttonState = digitalRead(buttonPin);
   String val = Serial.readString();
+  lcd.clear();
+  buttonCheck.check();
+  //lcdState = lcdState % 3;
+  switch (lcdState) {
+    case 0:
+      lcd.print("0");
+      break;
+    case 1:
+      lcd.print(1);
+      break;
+    case 2:
+      case2(val);
+      break;
+    default:
+      lcd.print("-1");
+    }
+
+}
+
+void case2(String val)
+{
   int spaceIndex[6];
   String values[6];
   spaceIndex[0] = 0;
@@ -30,58 +47,24 @@ void loop()
     index = spaceIndex[i] + 1;
   }
   index = 0;
-  for(i=0; i<6; i++)
+  for(int i=0; i<6; i++)
   {
     values[i] = val.substring(index, spaceIndex[i]);
     index = spaceIndex[i] + 1;
-  }
-  if(buttonState == HIGH)
-  {
-    if(lcdState == 0)
-    {
-      lcdState = 1;
-      while(lcdState == 1)
-      {
-        lcd.clear();
-        for(i=0;i<=3;i++)
-        {
-          lcd.setCursor(0,0);
-          //lcd.print("CPU cores:");
-          //lcd.setCursor(0,1);
-          lcd.print(values[i]);
-          lcd.print(" ");
-          delay(500);
-        } 
-      }
-    }
-  }
-  else
-  {
-    if(lcdState == 1)
-    {
-      lcdState = 0;
-      lcd.clear();
-      for(i=4; i<6; i++)
-      {
-        int ram = values[i].toInt();
-        lcd.print(ram);
-        lcd.print(" ");
-      }
-    }
+    lcd.print(values[i]);
+    lcd.print(" ");
   }
   
-//  for(i=0; i<6; i++)
-//  //
-//  {
-//    //lcd.clear();
-//    //lcd.print(spaceIndex[i]);
-//    lcd.print(values[i]);
-//    lcd.print(" ");
-//    //if(values[i]>0)
-//      //Serial.print(values[i]);
-//      //Serial.print(" ");
-//  }
-//  delay(500);
-//  lcd.clear();
-
 }
+
+void ButtonState()
+{
+  if(button.stateChanged())
+  {
+    if(lcdState == 2)
+      lcdState = 0;
+    else
+      lcdState++;
+  }
+}
+
